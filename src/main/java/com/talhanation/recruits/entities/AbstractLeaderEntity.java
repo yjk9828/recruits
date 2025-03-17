@@ -38,6 +38,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkHooks;
 import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
+import org.apache.logging.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
 
 import java.util.*;
 
@@ -334,14 +336,35 @@ public abstract class AbstractLeaderEntity extends AbstractChunkLoaderEntity imp
         }
     }
 
-    public boolean enemyArmySpotted() {
-        double distanceToTarget = this.army.getPosition().distanceToSqr(enemyArmy.getPosition());
-        if(enemyArmy != null && !enemyArmy.getAllRecruitUnits().isEmpty() && distanceToTarget < 5000){
-            attackController.setInitPos(enemyArmy.getPosition());
-            return true;
-        }
-        return false;
-    }
+	private static final Logger LOGGER = LogManager.getLogger(AbstractLeaderEntity.class);
+
+	public boolean enemyArmySpotted() {
+		// fix code: 
+		if (this.enemyArmy == null) {
+			LOGGER.warn("enemyArmy is null in enemyArmySpotted()");
+			return false;
+		}
+		if (this.army == null) {
+			LOGGER.warn("army is null in enemyArmySpotted()");
+			return false;
+		}
+
+		Vec3 enemyPos = this.enemyArmy.getPosition();
+		if (enemyPos == null) {
+			LOGGER.warn("enemyArmy position is null in enemyArmySpotted()");
+			return false;
+		}
+
+		double distanceToTarget = this.army.getPosition().distanceToSqr(enemyPos);
+
+		if (this.enemyArmy.getAllRecruitUnits() != null && !this.enemyArmy.getAllRecruitUnits().isEmpty() && distanceToTarget < 5000) {
+			attackController.setInitPos(enemyPos);
+			return true;
+		}
+
+		return false;
+	}
+
 
     public void handleResupply() {
         RecruitCommanderUtil.setRecruitsWanderFreely(army.getAllRecruitUnits());
